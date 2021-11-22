@@ -1,48 +1,88 @@
 #pragma once
 #define CONTAINER_HPP
+#include <memory>
+#include <initializer_list>
+#include <cassert>
 
 // container type - vector
 template<typename T>
 class Container
 {
+public:
     T* arr;
-    size_t size;
+    size_t sz;
     size_t capacity;
-    Container(size_t size, T value = T()): size {size}, capacity {size * 2}
-    {        
-        arr = new T[capacity];
+    Container(size_t size): sz {size}, capacity {size * 2}
+    {
+        std::cout << "Constructor container" << std::endl;
+        void* pointer = std::aligned_alloc(alignof(T), sizeof(T)*capacity);
+        arr = reinterpret_cast<T*>(pointer);
+        size_t i;
+        try
+        {
+            for (i=0; i<sz; ++i)
+            {
+                new (arr + i) T();
+            }
+        }
+        catch(const std::exception& e)
+        {
+            std::cout << "Catch exception" << std::endl;
+            std::destroy(arr, arr + i);
+        }
+    }
+    Container(const std::initializer_list<T> &list): Container(list.size())
+    {
+        size_t i {0};
+        for (auto &element : list)
+        {
+            new(arr+i)T(element);
+            ++i;
+        }
+    }
+    ~Container()
+    {
+        std::cout << "Destructor container" << std::endl;
+        std::destroy(arr, arr+sz);
+        delete[] reinterpret_cast<char*>(arr);
+    }
+    size_t size()
+    {
+        return sz;
     }
     void reserve(size_t n)
     {
+        std::cout << "Reserve container" << std::endl;
         if(capacity >= n) return;
         T* newarr = reinterpret_cast<T*>(new uint8_t[ n*sizeof(T) ]);
         //placment new
         try {
-            std::uninitialized_copy(arr, arr + size, newarr);
+            std::uninitialized_copy(arr, arr + sz, newarr);
         }
         catch(...)
         {
-            delete[] reinteret_cast<uint8_t>(newarr);
+            delete[] reinterpret_cast<uint8_t>(newarr);
             throw;    
         }
         // try {
-        //     for(size_t i; i < size; ++i)
+        //     for(size_t i=0; i < sz; ++i)
         //     {
         //         new (newarr + i)T(arr[i]);
         //     }
         // }
         // catch(...)
         // {
-        //     for(size_t j=0; j<i; ++qj)
+        //     for(size_t j=0; j<i; ++j)
         //     {
         //         (newarr + i)->~T();
         //     }
         //     delete[] reinteret_cast<uint8_t>(newarr);
         //     throw;
         // }
-        for(size_t i=0; i < size; ++i)
+        for(size_t i=0; i < sz; ++i)
         {
-            (arr + i)->~T();
+            std::destroy_at(arr + i);
+            // (arr + i)->~T();
         }
         delete[] reinterpret_cast<uint8_t*>(arr);
         arr = newarr;
@@ -50,31 +90,57 @@ class Container
     }
 
     void resize(size_t n, const T& value = T())
-    {        
+    {
+        std::cout << "Resize container" << std::endl;
         if(n > capacity) reserve(n);
-        size = n;
-
+        size_t i;
         try {
-            std::uninitialized_copy(arr, arr + size, newarr);
+            for(i=sz; i<n; ++i)
+            {
+                new (arr + i)T(value);
+                // std::uninitialized_copy(arr, arr + sz, value);
+            }
         }
         catch(...)
         {
-            delete[] reinteret_cast<uint8_t>(newarr);
+            std::destroy(arr, arr + i);
+            // for(size_t j=0; j<i; ++j)
+            // {
+            //     (arr + j)->~T();
+            // }
             throw;    
         }
-
-        // insert default data
+        sz = n;
     }
 
     void push_back(const T& value)
     {
-        if (size == capacity) resize(size*2);
-        new (arr + size) T(value);
-        ++size;        
+        std::cout << "Push back container" << std::endl;
+        if (sz == capacity) resize(sz*2);
+        // try {
+        //     std::uninitialized_copy(arr);
+        // }
+        new (arr + sz) T(value);
+        ++sz;
     }
     void pop_back() 
     {
-        --size;
-        (arr + size)->~T();
+        std::cout << "Pop back container" << std::endl;
+        --sz;
+        std::destroy_at(arr + sz);
+        // (arr + sz)->~T();
+    }
+    T& operator[](size_t index)
+    {
+        assert(index >= 0 && index < sz);
+        return arr[index];
+    }
+    iterator begin()
+    {
+        return 
+    }
+    iterator end()
+    {
+
     }
 };
