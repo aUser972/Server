@@ -5,10 +5,10 @@ Include Conteiner Iterator and something else
 ## Test
 1) Container:
     * Resize - done.  
-    * Reserve  
-    * Pop back  
-    * Push back  
-    * Operator[]  
-    * Begin  
-    * End
+    * Reserve - done, but whithout allocator.  
+    * Pop back - error
+    * Push back  - Seg fault
+    * Operator[] - done.  
+    * Begin - done.
+    * End - done.
 

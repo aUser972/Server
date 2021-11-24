@@ -10,12 +10,12 @@ class Container
 {
     T* arr;
     size_t sz;
-    size_t capacity;
+    size_t cap;
 public:
     struct iterator {
         T* pointer;
         iterator(T* p): pointer{p} {};
-        iterator(iterator&) = default;
+        iterator(const iterator&) = default;
         iterator& operator++()
         {
             ++pointer;
@@ -27,12 +27,12 @@ public:
             ++pointer;
             return tmp;
         }
-        bool operator==(iterator& it)
+        bool operator==(const iterator& it)
         {
             if(pointer == it.pointer) return true;
             return false;
         }
-        bool operator!=(iterator& it)
+        bool operator!=(const iterator& it)
         {
             if(pointer != it.pointer) return true;
             return false;
@@ -46,10 +46,10 @@ public:
             return pointer;
         }
     };
-    Container(size_t size = 0): sz {size}, capacity {size * 2}
+    Container(size_t size = 0): sz {size}, cap {size * 2}
     {
-        std::cout << "Constructor container" << std::endl;
-        void* pointer = std::aligned_alloc(alignof(T), sizeof(T)*capacity);
+        // std::cout << "Constructor container" << std::endl;
+        void* pointer = std::aligned_alloc(alignof(T), sizeof(T)*cap);
         arr = reinterpret_cast<T*>(pointer);
         size_t i;
         try
@@ -76,7 +76,7 @@ public:
     }
     ~Container()
     {
-        std::cout << "Destructor container" << std::endl;
+        // std::cout << "Destructor container" << std::endl;
         std::destroy(arr, arr+sz);
         delete[] reinterpret_cast<char*>(arr);
     }
@@ -84,10 +84,14 @@ public:
     {
         return sz;
     }
+    size_t capacity()
+    {
+        return cap;
+    }
     void reserve(size_t n)
     {
-        std::cout << "Reserve container" << std::endl;
-        if(capacity >= n) return;
+        // std::cout << "Reserve container" << std::endl;
+        if(cap >= n) return;
         T* newarr = reinterpret_cast<T*>(new uint8_t[ n*sizeof(T) ]);
         //placment new
         try {
@@ -120,13 +124,13 @@ public:
         }
         delete[] reinterpret_cast<uint8_t*>(arr);
         arr = newarr;
-        capacity = n;
+        cap = n;
     }
 
     void resize(size_t n, const T& value = T())
     {
-        std::cout << "Resize container" << std::endl;
-        if(n > capacity) reserve(n);
+        // std::cout << "Resize container" << std::endl;
+        if(n > cap) reserve(n);
         size_t i;
         try {
             for(i=sz; i<n; ++i)
@@ -149,8 +153,8 @@ public:
 
     void push_back(const T& value)
     {
-        std::cout << "Push back container" << std::endl;
-        if (sz == capacity) resize(sz*2);
+        // std::cout << "Push back container" << std::endl;
+        if (sz == cap) resize(sz*2);
         // try {
         //     std::uninitialized_copy(arr);
         // }
@@ -159,7 +163,7 @@ public:
     }
     void pop_back() 
     {
-        std::cout << "Pop back container" << std::endl;
+        // std::cout << "Pop back container" << std::endl;
         --sz;
         std::destroy_at(arr + sz);
         // (arr + sz)->~T();
