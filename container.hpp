@@ -8,11 +8,45 @@
 template<typename T>
 class Container
 {
-public:
     T* arr;
     size_t sz;
     size_t capacity;
-    Container(size_t size): sz {size}, capacity {size * 2}
+public:
+    struct iterator {
+        T* pointer;
+        iterator(T* p): pointer{p} {};
+        iterator(iterator&) = default;
+        iterator& operator++()
+        {
+            ++pointer;
+            return *this;
+        }
+        iterator operator++(int)
+        {
+            iterator tmp(pointer);
+            ++pointer;
+            return tmp;
+        }
+        bool operator==(iterator& it)
+        {
+            if(pointer == it.pointer) return true;
+            return false;
+        }
+        bool operator!=(iterator& it)
+        {
+            if(pointer != it.pointer) return true;
+            return false;
+        }
+        T& operator*()
+        {
+            return *pointer;
+        }
+        T* operator->()
+        {
+            return pointer;
+        }
+    };
+    Container(size_t size = 0): sz {size}, capacity {size * 2}
     {
         std::cout << "Constructor container" << std::endl;
         void* pointer = std::aligned_alloc(alignof(T), sizeof(T)*capacity);
@@ -61,7 +95,7 @@ public:
         }
         catch(...)
         {
-            delete[] reinterpret_cast<uint8_t>(newarr);
+            delete[] reinterpret_cast<uint8_t*>(newarr);
             throw;    
         }
         // try {
@@ -130,6 +164,11 @@ public:
         std::destroy_at(arr + sz);
         // (arr + sz)->~T();
     }
+    bool empty()
+    {
+        if(sz>0) return false;
+        return true;
+    }
     T& operator[](size_t index)
     {
         assert(index >= 0 && index < sz);
@@ -137,10 +176,10 @@ public:
     }
     iterator begin()
     {
-        return 
+        return iterator {arr};
     }
     iterator end()
     {
-
+        return iterator {arr + sz};
     }
 };
