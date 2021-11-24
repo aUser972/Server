@@ -15,15 +15,13 @@ void print(T const & xs)
  
 int main()
 {
-    Container<int> numbers {2, 4, 6, 8};
+    Container<std::string> letters;
  
-    std::cout << "Second element: " << numbers[1] << '\n';
+    letters.push_back("abc");
+    std::string s = "def";
+    letters.push_back(std::move(s));
  
-    numbers[0] = 5;
- 
-    std::cout << "All numbers:";
-    for (auto i : numbers) {
-        std::cout << ' ' << i;
-    }
-    std::cout << '\n';
+    std::cout << "vector holds: ";
+    for (auto&& i : letters) std::cout << std::quoted(i) << ' ';
+    std::cout << "\nMoved-from string holds " << std::quoted(s) << '\n';
 }
