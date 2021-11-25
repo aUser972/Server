@@ -74,6 +74,7 @@ public:
             ++i;
         }
     }
+    Container(Container&&) = default;
     ~Container()
     {
         // std::cout << "Destructor container" << std::endl;
