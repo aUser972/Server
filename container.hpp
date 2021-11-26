@@ -74,12 +74,62 @@ public:
             ++i;
         }
     }
-    Container(Container&&) = default;
+    Container(const Container& cp): sz{cp.sz}, cap{cp.cap}
+    {
+        void* pointer = std::aligned_alloc(alignof(T), sizeof(T)*cap);
+        arr = reinterpret_cast<T*>(pointer);
+        // Replace this for call constructor
+        try {
+            std::uninitialized_copy(cp.arr, cp.arr + cp.sz, arr);
+        }
+        catch(...)
+        {
+            delete[] reinterpret_cast<uint8_t*>(arr);
+            throw;
+        }
+    }
+    Container(Container&& tmp): arr{tmp.arr}, sz{tmp.sz}, cap{tmp.cap}
+    {
+        tmp.arr = nullptr;
+        tmp.cap = tmp.sz = 0;
+    }
+    Container& operator=(Container&& tmp)
+    {
+        if(&tmp == this) return *this;
+        std::destroy(arr, arr+sz);
+        delete[] reinterpret_cast<uint8_t*>(arr);
+        arr = tmp.arr;
+        sz = tmp.sz;
+        cap = tmp.cap;
+        tmp.arr = nullptr;
+        tmp.cap = tmp.sz = 0;
+        return *this;
+    }
+    Container& operator=(const Container& cp)
+    {
+        if(cp.arr == arr) return *this;
+        // Call Destructor for all current object and delete memory array
+        std::destroy(arr, arr+sz);
+        delete[] reinterpret_cast<uint8_t*>(arr);
+        void* pointer = std::aligned_alloc(alignof(T), sizeof(T)*cp.cap);
+        arr = reinterpret_cast<T*>(pointer);
+        try {
+            std::uninitialized_copy(cp.arr, cp.arr + sz, arr);
+        }
+        catch(...)
+        {
+            delete[] reinterpret_cast<uint8_t*>(arr);
+            throw;    
+        }
+        cap = cp.cap;
+        sz = cp.sz;
+        return *this;
+    }
     ~Container()
     {
         // std::cout << "Destructor container" << std::endl;
         std::destroy(arr, arr+sz);
-        delete[] reinterpret_cast<char*>(arr);
+        delete[] reinterpret_cast<uint8_t*>(arr);
     }
     size_t size()
     {
