@@ -15,19 +15,17 @@ void print(T const & xs)
  
 int main()
 {
-    Container<std::string> letters;
+    Container<int> numbers;
  
-    letters.push_back("abc");
-    std::string s = "def";
-    letters.push_back("def");
-    
-
-    std::cout << "vector holds: ";
-    std::cout << letters[0] << std::endl;
-    std::cout << letters[1] << std::endl;
-    // for(size_t i=0; i<letters.size(); ++i){
-    //     std::cout << letters[i] << std::endl;
-    // }
-    // for (auto&& i : letters) std::cout << std::quoted(i) << ' ';
-    // std::cout << "\nMoved-from string holds " << std::quoted(s) << '\n';
+    print(numbers); 
+ 
+    numbers.push_back(5);
+    numbers.push_back(3);
+    numbers.push_back(4);
+ 
+    print(numbers); 
+ 
+    numbers.pop_back();
+ 
+    print(numbers); 
 }

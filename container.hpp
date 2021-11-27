@@ -9,8 +9,8 @@ template<typename T>
 class Container
 {
     T* arr;
-    size_t sz;
-    size_t cap;
+    size_t sz {0};
+    size_t cap {0};
 public:
     struct iterator {
         T* pointer;
@@ -131,11 +131,11 @@ public:
         std::destroy(arr, arr+sz);
         delete[] reinterpret_cast<uint8_t*>(arr);
     }
-    size_t size()
+    size_t size() const
     {
         return sz;
     }
-    size_t capacity()
+    size_t capacity() const
     {
         return cap;
     }
@@ -199,13 +199,16 @@ public:
             // }
             throw;    
         }
-        sz = n;
     }
 
     void push_back(const T& value)
     {
         // std::cout << "Push back container" << std::endl;
-        if (sz == cap) resize(sz*2);
+        if (sz == cap)
+        {
+            if (sz == 0) reserve(1);
+            reserve(sz*2);
+        }
         // try {
         //     std::uninitialized_copy(arr);
         // }
@@ -224,16 +227,16 @@ public:
         if(sz>0) return false;
         return true;
     }
-    T& operator[](size_t index)
+    T& operator[](size_t index) const
     {
         assert(index >= 0 && index < sz);
         return arr[index];
     }
-    iterator begin()
+    iterator begin() const
     {
         return iterator {arr};
     }
-    iterator end()
+    iterator end() const
     {
         return iterator {arr + sz};
     }

@@ -6,9 +6,11 @@ Include Conteiner Iterator and something else
 1) Container:
     * Resize - done.  
     * Reserve - done, but whithout allocator.  
-    * Pop back - error
-    * Push back  - Seg fault
+    * Pop back - done.  
+    * Push back  - done.  
     * Operator[] - done.  
-    * Begin - done.
-    * End - done.
+    * Begin - done.  
+    * End - done.  
+
+
 

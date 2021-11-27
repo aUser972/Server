@@ -32,4 +32,6 @@
 *.app
 
 #dirs
-build
+build/
+.vscode*/
+vscode
