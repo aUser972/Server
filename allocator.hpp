@@ -39,15 +39,58 @@ namespace my_allocator
 
 static my_allocator::mem_pool pool;
 
-void operator delete  ( void* ptr ) noexcept
+template<typename T>
+class my_list
 {
-  std::cout << "Try to deallocate memory" << std::endl;
-  // pool.deallocate(pointer, size);
-}
+  static_assert(std::is_integral(T)::value || std::is_floating_point(T)::value, "T must be integral or floating point");  
+  struct node 
+  {    
+    node* next;
+    T data;
+  };
+  node* head;
+  node* tail;
+public:
+  my_list()
+  {
+    head = new node;
+    head->next = nullptr;
+    tail = head;
+  }
+  bool is_empty()
+  {
+    if(!head->next) return true;
+    return false;
+  }
+  void push(const T value)
+  {
+    node* tmp = new node;
+    if(is_empty())
+    {
+      head->next = tmp;
+      tail = tmp;
+    }
+    tail->next = tmp;
+    tail = tmp;    
+  }
+  T& pop()
+  {
+    if(is_empty())
+    {
+      throw std::out_of_range("Try to pop from empty list");
+    }
+  }
+  void operator delete  ( void* ptr ) noexcept
+  {
+    std::cout << "Try to deallocate memory" << std::endl;
+    // pool.deallocate(pointer, size);
+  }
 
-void* operator new(size_t size)
-{
-  std::cout << "Try to allocate " << size << " bytes" << std::endl; 
-  // return pool.allocate(size);
-  return nullptr;
-}
+  void* operator new(size_t size)
+  {
+    std::cout << "Try to allocate " << size << " bytes" << std::endl; 
+    // return pool.allocate(size);
+    return nullptr;
+  }
+};
+
