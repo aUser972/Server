@@ -1,7 +1,20 @@
 #pragma once
 #define ALLOCATOR_HPP
-#include <iostream>
 #include <cstring>
+#include <iostream>
+
+// ***  Operator new and delete overloading *** //
+// void* operator new (size_t size)
+// {
+//   std::cout << "Try to allocate " << size << " bytes" << std::endl;
+//   return malloc(size);
+// }
+
+// void operator delete (void* ptr, size_t size)
+// {
+//   std::cout << "Try to deallocate memory" << std::endl;
+//   free(ptr);
+// }
 
 namespace my_allocator
 {
@@ -11,86 +24,81 @@ namespace my_allocator
     free_chunk* next;
   };
 
-  class mem_pool
+  template<typename T> class mem_pool
   {
-    static constexpr size_t sz = 1024*1024;
+    static constexpr size_t sz = 512 * 512;
     uint8_t arr[sz];
-    size_t free_mem = {sz};
-    size_t base_pointer {0};
+    size_t free_mem = { sz };
+    size_t base_pointer { 0 };
+
   public:
-    
-    mem_pool()
+    mem_pool() { std::memset(arr, 0, sz); }
+    T* allocate(size_t size)
     {
-      std::memset(arr, 0, sz);
-    }
-    void* allocate(size_t size)
-    {
-      if(size > free_mem) throw std::bad_alloc();
-      void* pointer = reinterpret_cast<void*>(arr[base_pointer]); 
+      if (size > free_mem) throw std::bad_alloc();
+      T* pointer = reinterpret_cast<T*>(arr + base_pointer);
       base_pointer += size;
       return pointer;
     }
-    void deallocate(void* pointer, size_t size)
-    {
-      base_pointer -= size; 
-    }
+    void deallocate(T* pointer, size_t size) { base_pointer -= size; }
+    void construct(T* pointer, const T& val) {}
+    void destroy(T* pointer) {}
   };
-}
+}   // namespace my_allocator
 
-static my_allocator::mem_pool pool;
-
-template<typename T>
-class my_list
+template<typename T> class my_list
 {
-  static_assert(std::is_integral(T)::value || std::is_floating_point(T)::value, "T must be integral or floating point");  
-  struct node 
-  {    
+  static_assert(std::is_integral<T>::value || std::is_floating_point<T>::value,
+                "T must be integral or floating point");
+  struct node
+  {
     node* next;
     T data;
   };
-  node* head;
-  node* tail;
+
 public:
+  node* head { nullptr };
+  node* tail { nullptr };
   my_list()
   {
-    head = new node;
+    head       = new node;
     head->next = nullptr;
-    tail = head;
+    tail       = head;
   }
   bool is_empty()
   {
-    if(!head->next) return true;
+    if (!head->next) return true;
     return false;
   }
   void push(const T value)
   {
     node* tmp = new node;
-    if(is_empty())
+    if (is_empty())
     {
       head->next = tmp;
-      tail = tmp;
+      tail       = tmp;
     }
     tail->next = tmp;
-    tail = tmp;    
+    tail       = tmp;
   }
   T& pop()
   {
-    if(is_empty())
-    {
-      throw std::out_of_range("Try to pop from empty list");
-    }
+    if (is_empty()) { throw std::out_of_range("Try to pop from empty list"); }
   }
-  void operator delete  ( void* ptr ) noexcept
-  {
-    std::cout << "Try to deallocate memory" << std::endl;
-    // pool.deallocate(pointer, size);
-  }
-
-  void* operator new(size_t size)
-  {
-    std::cout << "Try to allocate " << size << " bytes" << std::endl; 
-    // return pool.allocate(size);
-    return nullptr;
-  }
+  void operator delete(void*, size_t);
+  void* operator new(size_t);
 };
 
+static my_allocator::mem_pool<my_list<int>> pool;
+
+template<typename T> void my_list<T>::operator delete(void* ptr, size_t size)
+{
+  std::cout << "Try to deallocate memory" << std::endl;
+  pool.deallocate(reinterpret_cast<my_list<T>*>(ptr), size);
+}
+
+template<typename T> void* my_list<T>::operator new(size_t size)
+{
+  std::cout << "Try to allocate " << size << " bytes" << std::endl;
+  return pool.allocate(size);
+}

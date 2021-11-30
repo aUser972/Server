@@ -1,13 +1,14 @@
-#include <vector>
-#include <iostream>
-#include <iomanip>
-#include <thread>
-#include "container.hpp"
 #include "allocator.hpp"
+#include "container.hpp"
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
+#include <thread>
+#include <vector>
 
 int main()
 {
-    char* ptr = new char();
-    delete ptr;
-    return 0;
+  my_list<int>* ptr = new my_list<int>;
+  delete ptr;
+  return 0;
 }
