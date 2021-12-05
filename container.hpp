@@ -229,7 +229,12 @@ public:
     }
     T& operator[](size_t index) const
     {
-        assert(index >= 0 && index < sz);
+        //assert(index >= 0 && index < sz);
+        return arr[index];
+    }
+    T& at(size_t index) const
+    {
+        if(index <= 0 && index > sz) throw std::out_of_range("Container out of range");
         return arr[index];
     }
     iterator begin() const
