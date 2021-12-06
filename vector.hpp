@@ -1,11 +1,11 @@
 #pragma once
-#define CONTAINER_HPP
+#define VECTOR_HPP
 #include <cassert>
 #include <initializer_list>
 #include <memory>
 
-// container type - vector
-template<typename T> class Container
+// Vector type - vector
+template<typename T> class Vector
 {
   T* arr;
   size_t sz { 0 };
@@ -42,11 +42,11 @@ public:
     T& operator*() { return *pointer; }
     T* operator->() { return pointer; }
   };
-  Container(size_t size = 0)
+  Vector(size_t size = 0)
       : sz { size }
       , cap { size * 2 }
   {
-    // std::cout << "Constructor container" << std::endl;
+    // std::cout << "Constructor Vector" << std::endl;
     void* pointer = std::aligned_alloc(alignof(T), sizeof(T) * cap);
     arr           = reinterpret_cast<T*>(pointer);
     size_t i;
@@ -60,8 +60,8 @@ public:
       std::destroy(arr, arr + i);
     }
   }
-  Container(const std::initializer_list<T>& list)
-      : Container(list.size())
+  Vector(const std::initializer_list<T>& list)
+      : Vector(list.size())
   {
     size_t i { 0 };
     for (auto& element : list)
@@ -70,7 +70,7 @@ public:
       ++i;
     }
   }
-  Container(const Container& cp)
+  Vector(const Vector& cp)
       : sz { cp.sz }
       , cap { cp.cap }
   {
@@ -87,7 +87,7 @@ public:
       throw;
     }
   }
-  Container(Container&& tmp)
+  Vector(Vector&& tmp)
       : arr { tmp.arr }
       , sz { tmp.sz }
       , cap { tmp.cap }
@@ -95,7 +95,7 @@ public:
     tmp.arr = nullptr;
     tmp.cap = tmp.sz = 0;
   }
-  Container& operator=(Container&& tmp)
+  Vector& operator=(Vector&& tmp)
   {
     if (&tmp == this) return *this;
     std::destroy(arr, arr + sz);
@@ -107,7 +107,7 @@ public:
     tmp.cap = tmp.sz = 0;
     return *this;
   }
-  Container& operator=(const Container& cp)
+  Vector& operator=(const Vector& cp)
   {
     if (cp.arr == arr) return *this;
     // Call Destructor for all current object and delete memory array
@@ -128,9 +128,9 @@ public:
     sz  = cp.sz;
     return *this;
   }
-  ~Container()
+  ~Vector()
   {
-    // std::cout << "Destructor container" << std::endl;
+    // std::cout << "Destructor Vector" << std::endl;
     std::destroy(arr, arr + sz);
     delete[] reinterpret_cast<uint8_t*>(arr);
   }
@@ -138,7 +138,7 @@ public:
   size_t capacity() const { return cap; }
   void reserve(size_t n)
   {
-    // std::cout << "Reserve container" << std::endl;
+    // std::cout << "Reserve Vector" << std::endl;
     if (cap >= n) return;
     T* newarr = reinterpret_cast<T*>(new uint8_t[n * sizeof(T)]);
     // placment new
@@ -178,7 +178,7 @@ public:
 
   void resize(size_t n, const T& value = T())
   {
-    // std::cout << "Resize container" << std::endl;
+    // std::cout << "Resize Vector" << std::endl;
     if (n > cap) reserve(n);
     size_t i;
     try
@@ -202,7 +202,7 @@ public:
 
   void push_back(const T& value)
   {
-    // std::cout << "Push back container" << std::endl;
+    // std::cout << "Push back Vector" << std::endl;
     if (sz == cap)
     {
       if (sz == 0) reserve(1);
@@ -216,7 +216,7 @@ public:
   }
   void pop_back()
   {
-    // std::cout << "Pop back container" << std::endl;
+    // std::cout << "Pop back Vector" << std::endl;
     --sz;
     std::destroy_at(arr + sz);
     // (arr + sz)->~T();
@@ -233,7 +233,7 @@ public:
   }
   T& at(size_t index) const
   {
-    if(index <= 0 && index > sz) throw std::out_of_range("Container out of range");
+    if(index <= 0 && index > sz) throw std::out_of_range("Vector out of range");
     return arr[index];
   }
   iterator begin() const { return iterator { arr }; }

@@ -1,14 +1,17 @@
-#include "allocator.hpp"
-#include "container.hpp"
+#include "tmp_allocator.hpp"
+#include "vector.hpp"
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <bitset>
 
 int main()
 {
-  my_list<int>* ptr = new my_list<int>;
-  delete ptr;
+  int start = 0;
+  int end = 0;
+  end=++start;
+  std::cout << end << " " << start << '\n';
   return 0;
 }
