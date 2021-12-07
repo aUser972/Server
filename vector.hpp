@@ -5,16 +5,17 @@
 #include <memory>
 
 // Vector type - vector
-template<typename T> class Vector
+template<typename T, class Allocator = std::allocator<T>> class Vector
 {
   T* arr;
   size_t sz { 0 };
   size_t cap { 0 };
+  Allocator allocator;
 
 public:
   struct iterator
   {
-    T* pointer;
+    T* pointer;    
     iterator(T* p)
         : pointer { p } {};
     iterator(const iterator&) = default;
@@ -47,17 +48,20 @@ public:
       , cap { size * 2 }
   {
     // std::cout << "Constructor Vector" << std::endl;
-    void* pointer = std::aligned_alloc(alignof(T), sizeof(T) * cap);
-    arr           = reinterpret_cast<T*>(pointer);
+    arr = allocator.allocate(sizeof(T) * cap);
+    // void* pointer = std::aligned_alloc(alignof(T), sizeof(T) * cap);
+    // arr           = reinterpret_cast<T*>(pointer);
     size_t i;
     try
     {
-      for (i = 0; i < sz; ++i) { new (arr + i) T(); }
+      for (i = 0; i < sz; ++i) { allocator.construct(arr + i, T()); }
+      // for (i = 0; i < sz; ++i) { new (arr + i) T(); }
     }
     catch (const std::exception& e)
     {
-      std::cout << "Catch exception" << std::endl;
-      std::destroy(arr, arr + i);
+      for (size_t j = 0; j < i; ++j) { allocator.destroy(arr + j); }
+      // std::cout << "Catch exception" << std::endl;
+      // std::destroy(arr, arr + i);
     }
   }
   Vector(const std::initializer_list<T>& list)
@@ -66,24 +70,27 @@ public:
     size_t i { 0 };
     for (auto& element : list)
     {
-      new (arr + i) T(element);
+      allocator.construct(arr + i, element);
+      // new (arr + i) T(element);
       ++i;
     }
   }
-  Vector(const Vector& cp)
-      : sz { cp.sz }
-      , cap { cp.cap }
+  Vector(const Vector& v)
+      : sz { v.sz }
+      , cap { v.cap }
   {
-    void* pointer = std::aligned_alloc(alignof(T), sizeof(T) * cap);
-    arr           = reinterpret_cast<T*>(pointer);
+    arr = allocator.allocate(sizeof(T) * cap);
+    // void* pointer = std::aligned_alloc(alignof(T), sizeof(T) * cap);
+    // arr           = reinterpret_cast<T*>(pointer);
     // Replace this for call constructor
     try
     {
-      std::uninitialized_copy(cp.arr, cp.arr + cp.sz, arr);
+      std::uninitialized_copy(v.arr, v.arr + v.sz, arr);
     }
     catch (...)
     {
-      delete[] reinterpret_cast<uint8_t*>(arr);
+      allocator.deallocate(arr, sizeof(T) * cap);
+      // delete[] reinterpret_cast<uint8_t*>(arr);
       throw;
     }
   }
@@ -98,8 +105,10 @@ public:
   Vector& operator=(Vector&& tmp)
   {
     if (&tmp == this) return *this;
-    std::destroy(arr, arr + sz);
-    delete[] reinterpret_cast<uint8_t*>(arr);
+    // std::destroy(arr, arr + sz);
+    for (size_t i = 0; i < sz; ++i) { allocator.destroy(arr); }
+    // delete[] reinterpret_cast<uint8_t*>(arr);
+    allocator.deallocate(arr, cap);
     arr     = tmp.arr;
     sz      = tmp.sz;
     cap     = tmp.cap;
@@ -111,17 +120,21 @@ public:
   {
     if (cp.arr == arr) return *this;
     // Call Destructor for all current object and delete memory array
-    std::destroy(arr, arr + sz);
-    delete[] reinterpret_cast<uint8_t*>(arr);
-    void* pointer = std::aligned_alloc(alignof(T), sizeof(T) * cp.cap);
-    arr           = reinterpret_cast<T*>(pointer);
+    // std::destroy(arr, arr + sz);
+    for (size_t i = 0; i < sz; ++i) { allocator.destroy(arr); }
+    // delete[] reinterpret_cast<uint8_t*>(arr);
+    allocator.deallocate(arr, cap);
+    // void* pointer = std::aligned_alloc(alignof(T), sizeof(T) * cp.cap);
+    // arr           = reinterpret_cast<T*>(pointer);
+    arr = allocator.allocate(cp.cap);
     try
     {
       std::uninitialized_copy(cp.arr, cp.arr + sz, arr);
     }
     catch (...)
     {
-      delete[] reinterpret_cast<uint8_t*>(arr);
+      // delete[] reinterpret_cast<uint8_t*>(arr);
+      allocator.deallocate(arr, cap);
       throw;
     }
     cap = cp.cap;
@@ -131,8 +144,10 @@ public:
   ~Vector()
   {
     // std::cout << "Destructor Vector" << std::endl;
-    std::destroy(arr, arr + sz);
-    delete[] reinterpret_cast<uint8_t*>(arr);
+    // std::destroy(arr, arr + sz);
+    for (size_t i = 0; i < sz; ++i) { allocator.destroy(arr + i); }
+    // delete[] reinterpret_cast<uint8_t*>(arr);
+    allocator.deallocate(arr, cap);
   }
   size_t size() const { return sz; }
   size_t capacity() const { return cap; }
@@ -140,7 +155,8 @@ public:
   {
     // std::cout << "Reserve Vector" << std::endl;
     if (cap >= n) return;
-    T* newarr = reinterpret_cast<T*>(new uint8_t[n * sizeof(T)]);
+    // T* newarr = reinterpret_cast<T*>(new uint8_t[n * sizeof(T)]);
+    T* newarr = allocator.allocate(n);
     // placment new
     try
     {
@@ -148,7 +164,8 @@ public:
     }
     catch (...)
     {
-      delete[] reinterpret_cast<uint8_t*>(newarr);
+      allocator.deallocate(newarr, n);
+      // delete[] reinterpret_cast<uint8_t*>(newarr);
       throw;
     }
     // try {
@@ -168,10 +185,12 @@ public:
     // }
     for (size_t i = 0; i < sz; ++i)
     {
-      std::destroy_at(arr + i);
+      allocator.destroy(arr + i);
+      // std::destroy_at(arr + i);
       // (arr + i)->~T();
     }
-    delete[] reinterpret_cast<uint8_t*>(arr);
+    allocator.deallocate(arr, cap);
+    // delete[] reinterpret_cast<uint8_t*>(arr);
     arr = newarr;
     cap = n;
   }
@@ -185,13 +204,15 @@ public:
     {
       for (i = sz; i < n; ++i)
       {
-        new (arr + i) T(value);
+        allocator.construct(arr + i, value);
+        // new (arr + i) T(value);
         // std::uninitialized_copy(arr, arr + sz, value);
       }
     }
     catch (...)
     {
-      std::destroy(arr, arr + i);
+      // std::destroy(arr, arr + i);
+      for (size_t j = 0; j < i; ++j) { allocator.destroy(arr + j); }
       // for(size_t j=0; j<i; ++j)
       // {
       //     (arr + j)->~T();
@@ -211,14 +232,17 @@ public:
     // try {
     //     std::uninitialized_copy(arr);
     // }
-    new (arr + sz) T(value);
+
+    // new (arr + sz) T(value);
+    allocator.construct(arr + sz, value);
     ++sz;
   }
   void pop_back()
   {
     // std::cout << "Pop back Vector" << std::endl;
     --sz;
-    std::destroy_at(arr + sz);
+    allocator.destroy(arr + sz);
+    // std::destroy_at(arr + sz);
     // (arr + sz)->~T();
   }
   bool empty()
@@ -228,12 +252,13 @@ public:
   }
   T& operator[](size_t index) const
   {
-    //assert(index >= 0 && index < sz);
+    // assert(index >= 0 && index < sz);
     return arr[index];
   }
   T& at(size_t index) const
   {
-    if(index <= 0 && index > sz) throw std::out_of_range("Vector out of range");
+    if (index <= 0 && index > sz)
+      throw std::out_of_range("Vector out of range");
     return arr[index];
   }
   iterator begin() const { return iterator { arr }; }

@@ -1,4 +1,5 @@
 #include "tmp_allocator.hpp"
+#include "allocator.hpp"
 #include "vector.hpp"
 #include <cstdlib>
 #include <iomanip>
@@ -9,9 +10,6 @@
 
 int main()
 {
-  int start = 0;
-  int end = 0;
-  end=++start;
-  std::cout << end << " " << start << '\n';
+  std::allocator<int>::value_type;
   return 0;
 }
