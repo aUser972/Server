@@ -13,9 +13,15 @@ template<typename T> class Allocator
   static constexpr size_t ch_count { mem_pool_sz / sizeof(T) };
   std::bitset<ch_count> filled_chunk;
   T* arr;
-
 public:
-  Allocator() { arr = std::aligned_alloc(alignof(T), ch_count); }
+  typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
+  typedef T* pointer;
+  typedef const T* const_pointer;
+  typedef T& reference;
+  typedef const T& const_reference;
+  typedef T value_type;
+  Allocator() { arr = reinterpret_cast<T*>(std::aligned_alloc(alignof(T), ch_count)); }
   ~Allocator() { delete[] reinterpret_cast<uint8_t*>(arr); }
   T* allocate(size_t sz)
   {
