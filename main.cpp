@@ -8,31 +8,52 @@
 #include <vector>
 #include <bitset>
 #include <memory_resource>
+#include <stdio.h>
 
-template<typename T>
-void print(T const & xs)
+ 
+struct President
 {
-    std::cout << "[ ";
-    for(auto const & x : xs) {
-        std::cout << x << ' ';
+    std::string name;
+    std::string country;
+    int year;
+ 
+    President(std::string p_name, std::string p_country, int p_year)
+        : name(std::move(p_name)), country(std::move(p_country)), year(p_year)
+    {
+        // printf("Name addr %p\n", name.c_str());
+        // printf("Country addr %p\n", country.c_str());
+        // std::cout << "year addr: " << &year << std::endl;
+        std::cout << "I am being constructed.\n";
     }
-    std::cout << "]\n";
-}
+    President(President&& other)
+        : name(std::move(other.name)), country(std::move(other.country)), year(other.year)
+    {
+        // std::cout << "year is: " << year << std::endl;
+        std::cout << "I am being moved.\n";
+    }
+    President(const President& other) = default;
+    President& operator=(const President& other) = default;
+};
 
 int main()
 {
-    Vector<int, Allocator<int>> numbers;
+    //std::cout << "Sizeof struct: " << sizeof(President) << std::endl;
+    std::vector<President, Allocator<President>> elections;
+    std::cout << "emplace_back:\n";
+    elections.emplace_back("Nelson Mandela", "South Africa", 1994);
+    // assert(ref.year == 1994 && "uses a reference to the created object (C++17)");
  
-    print(numbers);
+    std::vector<President, Allocator<President>> reElections;
+    std::cout << "\npush_back:\n";
+    reElections.push_back(President("Franklin Delano Roosevelt", "the USA", 1936));
  
-    numbers.push_back(5);
-    numbers.push_back(3);
-    numbers.push_back(4);
- 
-    print(numbers);
- 
-    numbers.pop_back();
- 
-    print(numbers);
-  return 0;
+    std::cout << "\nContents:\n";
+    for (President const& president: elections) {
+        std::cout << president.name << " was elected president of "
+                  << president.country << " in " << president.year << ".\n";
+    }
+    for (President const& president: reElections) {
+        std::cout << president.year << " was re-elected president of "
+                  << president.country << " in " << president.year << ".\n";
+    }
 }
