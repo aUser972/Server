@@ -31,9 +31,9 @@ public:
   ~Allocator() { delete[] reinterpret_cast<uint8_t*>(arr); }
   T* allocate(size_t sz)
   {
-    size_t start { 0 };
-    size_t end { 0 };
-    size_t i { 0 };
+    auto start { 0 };
+    auto end { 0 };
+    auto i { 0 };
     if(sz > ch_count) throw std::bad_alloc();
     try
     {
@@ -55,14 +55,14 @@ public:
   void deallocate(T* ptr, size_t sz)
   {
     // std::cout << "Deallocate " << sz << " chunks\n";
-    size_t i = ptr - arr;
+    auto i = ptr - arr;
     try
     {
       while (i < sz) { filled_chunk.reset(i); ++i; }
     }
     catch (const std::exception& e)
     {
-      for (size_t j = (ptr - arr); j < i; ++j) { filled_chunk.set(j); }
+      for (auto j = (ptr - arr); j < i; ++j) { filled_chunk.set(j); }
       throw;
     }
   }

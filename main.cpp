@@ -20,15 +20,11 @@ struct President
     President(std::string p_name, std::string p_country, int p_year)
         : name(std::move(p_name)), country(std::move(p_country)), year(p_year)
     {
-        // printf("Name addr %p\n", name.c_str());
-        // printf("Country addr %p\n", country.c_str());
-        // std::cout << "year addr: " << &year << std::endl;
         std::cout << "I am being constructed.\n";
     }
-    President(President&& other)
+    President(President&& other) noexcept
         : name(std::move(other.name)), country(std::move(other.country)), year(other.year)
     {
-        // std::cout << "year is: " << year << std::endl;
         std::cout << "I am being moved.\n";
     }
     President(const President& other) = default;
@@ -37,13 +33,12 @@ struct President
 
 int main()
 {
-    //std::cout << "Sizeof struct: " << sizeof(President) << std::endl;
-    std::vector<President, Allocator<President>> elections;
+    Vector<President> elections;
     std::cout << "emplace_back:\n";
     elections.emplace_back("Nelson Mandela", "South Africa", 1994);
     // assert(ref.year == 1994 && "uses a reference to the created object (C++17)");
  
-    std::vector<President, Allocator<President>> reElections;
+    Vector<President> reElections;
     std::cout << "\npush_back:\n";
     reElections.push_back(President("Franklin Delano Roosevelt", "the USA", 1936));
  

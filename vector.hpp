@@ -46,8 +46,8 @@ public:
       : sz { size }
       , cap { size * 2 }
   {
-    arr = allocator.allocate(sizeof(T) * cap);
-    size_t i;
+    // arr = allocator.allocate(sizeof(T) * cap);
+    arr = std::allocator_traits<Allocator>::allocate(allocator, cap);
   }
   Vector(const std::initializer_list<T>& list)
       : Vector(list.size())
@@ -55,7 +55,7 @@ public:
     size_t i { 0 };
     for (auto& element : list)
     {
-      allocator.construct(arr + i, element);
+      std::allocator_traits<Allocator>::construct(allocator, arr + i, element);
       ++i;
     }
   }
@@ -63,18 +63,18 @@ public:
       : sz { v.sz }
       , cap { v.cap }
   {
-    arr = allocator.allocate(sizeof(T) * cap);
+    arr = std::allocator_traits<Allocator>::allocate(allocator, cap);
     try
     {
       std::uninitialized_copy(v.arr, v.arr + v.sz, arr);
     }
     catch (...)
     {
-      allocator.deallocate(arr, sizeof(T) * cap);
+      std::allocator_traits<Allocator>::deallocate(allocator, arr, cap);
       throw;
     }
   }
-  Vector(Vector&& tmp)
+  Vector(Vector&& tmp) noexcept
       : arr { tmp.arr }
       , sz { tmp.sz }
       , cap { tmp.cap }
@@ -85,8 +85,11 @@ public:
   Vector& operator=(Vector&& tmp)
   {
     if (&tmp == this) return *this;
-    for (size_t i = 0; i < sz; ++i) { allocator.destroy(arr); }
-    allocator.deallocate(arr, cap);
+    for (size_t i = 0; i < sz; ++i)
+    {
+      std::allocator_traits<Allocator>::destroy(allocator, arr + i);
+    }
+    std::allocator_traits<Allocator>::deallocate(allocator, arr, cap);
     arr     = tmp.arr;
     sz      = tmp.sz;
     cap     = tmp.cap;
@@ -97,16 +100,19 @@ public:
   Vector& operator=(const Vector& cp)
   {
     if (cp.arr == arr) return *this;
-    for (size_t i = 0; i < sz; ++i) { allocator.destroy(arr); }
-    allocator.deallocate(arr, cap);
-    arr = allocator.allocate(cp.cap);
+    for (size_t i = 0; i < sz; ++i)
+    {
+      std::allocator_traits<Allocator>::destroy(allocator, arr + i);
+    }
+    std::allocator_traits<Allocator>::deallocate(allocator, arr, cap);
+    arr = std::allocator_traits<Allocator>::allocate(allocator, cp.cap);
     try
     {
       std::uninitialized_copy(cp.arr, cp.arr + sz, arr);
     }
     catch (...)
     {
-      allocator.deallocate(arr, cap);
+      std::allocator_traits<Allocator>::deallocate(allocator, arr, cap);
       throw;
     }
     cap = cp.cap;
@@ -115,29 +121,41 @@ public:
   }
   ~Vector()
   {
-    for (size_t i = 0; i < sz; ++i) { allocator.destroy(arr + i); }
-    allocator.deallocate(arr, cap);
+    for (size_t i = 0; i < sz; ++i)
+    {
+      std::allocator_traits<Allocator>::destroy(allocator, arr + i);
+    }
+    std::allocator_traits<Allocator>::deallocate(allocator, arr, cap);
   }
   size_t size() const { return sz; }
   size_t capacity() const { return cap; }
   void reserve(size_t n)
   {
     if (cap >= n) return;
-    T* newarr = allocator.allocate(n);
+    T* newarr = std::allocator_traits<Allocator>::allocate(allocator, n);
+    
+    size_t i;
     try
     {
-      std::uninitialized_copy(arr, arr + sz, newarr);
+      for(i = 0; i<sz; ++i)
+      {
+        std::allocator_traits<Allocator>::construct(allocator, newarr, std::move_if_noexcept(arr[i]));
+      }
     }
     catch (...)
     {
-      allocator.deallocate(newarr, n);
+      for(size_t j = 0; j<i; ++j)
+      {
+        std::allocator_traits<Allocator>::destroy(allocator, newarr + j);
+      }
+      std::allocator_traits<Allocator>::deallocate(allocator, newarr, n);
       throw;
     }
     for (size_t i = 0; i < sz; ++i)
     {
-      allocator.destroy(arr + i);
+      std::allocator_traits<Allocator>::destroy(allocator, arr + i);
     }
-    allocator.deallocate(arr, cap);
+    std::allocator_traits<Allocator>::deallocate(allocator, arr, cap);
     arr = newarr;
     cap = n;
   }
@@ -145,17 +163,20 @@ public:
   void resize(size_t n, const T& value = T())
   {
     if (n > cap) reserve(n);
-    size_t i;
+    size_t i {0};
     try
     {
       for (i = sz; i < n; ++i)
       {
-        allocator.construct(arr + i, value);
+        std::allocator_traits<Allocator>::construct(allocator, arr + i, value);
       }
     }
     catch (...)
     {
-      for (size_t j = 0; j < i; ++j) { allocator.destroy(arr + j); }
+      for (size_t j = 0; j < i; ++j)
+      {
+        std::allocator_traits<Allocator>::destroy(allocator, arr + j);
+      }
       throw;
     }
   }
@@ -168,7 +189,7 @@ public:
       if (sz == 0) reserve(1);
       else reserve(sz * 2);
     }
-    allocator.construct(arr + sz, std::forward<Arg>(args)...);
+    std::allocator_traits<Allocator>::construct(allocator, arr + sz, std::forward<Arg>(args)...);
     ++sz;
     return *reinterpret_cast<T*>(arr + sz);
   }
@@ -180,13 +201,22 @@ public:
       if (sz == 0) reserve(1);
       else reserve(sz * 2);
     }
-    allocator.construct(arr + sz, value);
+    std::allocator_traits<Allocator>::construct(allocator, arr + sz, std::forward<const T&>(value));
     ++sz;
+  }
+  void push_back(T&& value)
+  {
+    if(sz == cap)
+    {
+      if (sz == 0) reserve(1);
+      else reserve(sz * 2);
+    }
+    std::allocator_traits<Allocator>::construct(allocator, arr + sz, std::forward<T&&>(value));
   }
   void pop_back()
   {
     --sz;
-    allocator.destroy(arr + sz);
+    std::allocator_traits<Allocator>::destroy(allocator, arr + sz);
   }
   bool empty()
   {
