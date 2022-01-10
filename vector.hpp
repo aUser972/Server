@@ -181,15 +181,15 @@ public:
     }
   }
 
-  template<typename... Arg>
-  T& emplace_back(Arg&&... args)
+  template<typename... Args>
+  T& emplace_back(Args&&... args)
   {
     if (sz == cap)
     {
       if (sz == 0) reserve(1);
       else reserve(sz * 2);
     }
-    std::allocator_traits<Allocator>::construct(allocator, arr + sz, std::forward<Arg>(args)...);
+    std::allocator_traits<Allocator>::construct(allocator, arr + sz, std::forward<Args>(args)...);
     ++sz;
     return *reinterpret_cast<T*>(arr + sz);
   }

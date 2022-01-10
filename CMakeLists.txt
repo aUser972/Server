@@ -10,6 +10,7 @@ file(GLOB SOURCES   "connection.hpp"
                     "vector.hpp"
                     "iterator.hpp"
                     "tmp_allocator.hpp"
+                    "shared_ptr.hpp"
                     "main.cpp")
 
 add_executable(echo-server ${SOURCES})
