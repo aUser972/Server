@@ -1,4 +1,4 @@
-//#pragma once
+#pragma once
 #include <iostream>
 #include <string>
 
@@ -10,57 +10,59 @@ struct ControlBlock
     ControlBlock() = default;
 };
 
+struct shared_ptr_t {};
+
 template<typename T>
 class shared_ptr
 {
 private:
-    T* ptr = nullptr;
-    size_t* counter = nullptr;
-    
-
-    struct shared_ptr_t;
-    template<typename U, typename... Args>
-    friend shared_ptr<U> make_shared(Args&& ... args);
+    // T* ptr = nullptr;
+    // size_t* counter = nullptr;
     
     ControlBlock<T>* cptr;
+
+    template<typename U, typename... Args>
+    friend shared_ptr<U> make_shared(Args&& ... args);
+
     template<typename... Args>
-    shared_ptr(int s, ControlBlock<T>* storage): cptr{storage} {}
+    shared_ptr(shared_ptr_t s, ControlBlock<T>* storage): cptr{storage} {}
 public:
-    shared_ptr(T* ptr): ptr{ptr}, counter{new size_t(1)} {}
-    shared_ptr(const shared_ptr& other): ptr{other.ptr}, counter{other.counter}
+    shared_ptr(T* ptr) 
     {
-        ++*counter;
+        cptr = new ControlBlock<T>{1, std::forward<T>(*ptr)};
     }
-    shared_ptr(shared_ptr&& other) noexcept : ptr{other.ptr}, counter{other.counter}
+    shared_ptr(const shared_ptr& other): cptr{other.cptr}
     {
-        other.counter == nullptr;
-        other.ptr == nullptr;
+        ++cptr->counter;
+    }
+    shared_ptr(shared_ptr&& other) noexcept : cptr{other.cptr}
+    {
+        other.cptr = nullptr;
     }
     ~shared_ptr()
     {
-        if(*counter > 1)
+        if(cptr->counter > 1)
         {
-            --*counter;
+            --cptr->counter;
             return;
         }
-        delete ptr;
-        delete counter;
+        delete cptr;
     }
-    shared_ptr& operator=(const shared_ptr& other)
-    {
-        ++*counter;
-        ptr = other.ptr;
-        counter = other.counter;
-        return *this;
-    }
-    shared_ptr& operator=(shared_ptr&& other) noexcept
-    {
-        ptr = other.ptr;
-        counter = other.counter;
-        other.counter == nullptr;
-        other.ptr == nullptr;
-        return *this;
-    }
+    // shared_ptr& operator=(const shared_ptr& other)
+    // {
+    //     ++*counter;
+    //     ptr = other.ptr;
+    //     counter = other.counter;
+    //     return *this;
+    // }
+    // shared_ptr& operator=(shared_ptr&& other) noexcept
+    // {
+    //     ptr = other.ptr;
+    //     counter = other.counter;
+    //     other.counter == nullptr;
+    //     other.ptr == nullptr;
+    //     return *this;
+    // }
     T* get() const noexcept
     {
         return &cptr->object;
@@ -68,15 +70,9 @@ public:
 };
 
 template<typename T, typename... Args>
-shared_ptr<T>& make_shared(Args&& ... args)
+shared_ptr<T> make_shared(Args&& ... args)
 {
     auto ptr = new ControlBlock<T>{1, T{ std::forward<Args>(args)... }};
-    auto t = shared_ptr<typename T>::shared_ptr_t();
-    return shared_ptr<T>(t, ptr);
-}
-
-int main()
-{
-    auto a = make_shared<std::string>("Hello");
-    std::cout << *a.get() << std::endl;
+    shared_ptr_t s;
+    return shared_ptr<T>(s, ptr);
 }
