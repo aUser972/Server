@@ -2,25 +2,19 @@
 #include <iostream>
 #include <string>
 
-template<typename U>
-struct ControlBlock
-{        
-    size_t counter;
-    U object;
-    ControlBlock() = default;
-};
-
-struct shared_ptr_t {};
-
 template<typename T>
 class shared_ptr
 {
 private:
-    // T* ptr = nullptr;
-    // size_t* counter = nullptr;
-    
+    template<typename U>
+    struct ControlBlock
+    {        
+        size_t counter;
+        U object;
+        ControlBlock() = default;
+    };    
     ControlBlock<T>* cptr;
-
+    struct shared_ptr_t {};
     template<typename U, typename... Args>
     friend shared_ptr<U> make_shared(Args&& ... args);
 
@@ -72,7 +66,6 @@ public:
 template<typename T, typename... Args>
 shared_ptr<T> make_shared(Args&& ... args)
 {
-    auto ptr = new ControlBlock<T>{1, T{ std::forward<Args>(args)... }};
-    shared_ptr_t s;
-    return shared_ptr<T>(s, ptr);
+    auto ptr = new typename shared_ptr<T>::template ControlBlock<T>{1, T{ std::forward<Args>(args)... }};
+    return shared_ptr<T>(typename shared_ptr<T>::shared_ptr_t(), ptr);
 }
