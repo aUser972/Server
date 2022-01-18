@@ -9,25 +9,32 @@
 
 #include "tmp_allocator.hpp"
 #include "shared_ptr.hpp"
+#include "weak_ptr.hpp"
 #include "allocator.hpp"
 #include "vector.hpp"
 
-template<typename T>
-struct some_struct
+void observe(std::weak_ptr<int> weak) 
 {
-    T x;
-    struct another_struct
-    {
-
-    };
-    some_struct(T x): x{x} { std::cout << "Call first constructor\n"; }
-    some_struct(another_struct s, T x): x{x} { std::cout << "Call second constructor\n"; }
-};
-
+    if (auto observe = weak.lock()) {
+        std::cout << "\tobserve() able to lock weak_ptr<>, value=" << "\n";
+    } else {
+        std::cout << "\tobserve() unable to lock weak_ptr<>\n";
+    }
+}
+ 
 int main()
 {
-    // some_struct<int> s(some_struct<int>::another_struct(), 10);
-    auto a = make_shared<std::string>("Hello");
-    std::cout << *a.get() << std::endl;
-    return 0;
+    std::weak_ptr<int> weak;
+    std::cout << "weak_ptr<> not yet initialized\n";
+    observe(weak);
+ 
+    {
+        auto shared = std::make_shared<int>(42);
+        weak = shared;
+        std::cout << "weak_ptr<> initialized with shared_ptr.\n";
+        observe(weak);
+    }
+ 
+    std::cout << "shared_ptr<> has been destructed due to scope exit.\n";
+    observe(weak);
 }

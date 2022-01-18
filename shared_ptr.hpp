@@ -8,11 +8,11 @@ class shared_ptr
 private:
     template<typename U>
     struct ControlBlock
-    {        
+    {
         size_t counter;
         U object;
         ControlBlock() = default;
-    };    
+    };
     ControlBlock<T>* cptr;
     struct shared_ptr_t {};
     template<typename U, typename... Args>
@@ -41,6 +41,14 @@ public:
             return;
         }
         delete cptr;
+    }
+    explicit operator bool() const noexcept
+    {
+        return true;
+    }
+    T& operator*() const noexcept
+    {
+        return cptr->object;
     }
     // shared_ptr& operator=(const shared_ptr& other)
     // {
