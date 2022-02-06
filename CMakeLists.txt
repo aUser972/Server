@@ -10,6 +10,7 @@ file(GLOB SOURCES   "connection.hpp"
                     "vector.hpp"
                     "iterator.hpp"
                     "tmp_allocator.hpp"
+                    "tuple.hpp"
                     "shared_ptr.hpp"
                     "weak_ptr.hpp"
                     "main.cpp")
